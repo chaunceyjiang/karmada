@@ -1,14 +1,18 @@
 package helper
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 
 	discoveryv1 "k8s.io/api/discovery/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/util/sets"
+	"k8s.io/client-go/util/retry"
 	"k8s.io/klog/v2"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
 	policyv1alpha1 "github.com/karmada-io/karmada/pkg/apis/policy/v1alpha1"
 	"github.com/karmada-io/karmada/pkg/util"
@@ -166,4 +170,51 @@ func GetAppliedPlacement(annotations map[string]string) (*policyv1alpha1.Placeme
 		return nil, err
 	}
 	return placement, nil
+}
+
+// CreateOrUpdateOverridePolicy creates a overridePolicy object if not exist, or updates if it already exist.
+func CreateOrUpdateOverridePolicy(client client.Client, policyMeta metav1.ObjectMeta, resource *unstructured.Unstructured, overrideRules []policyv1alpha1.RuleWithCluster) error {
+	var err error
+	overridePolicy := &policyv1alpha1.OverridePolicy{
+		ObjectMeta: policyMeta,
+		Spec: policyv1alpha1.OverrideSpec{
+			ResourceSelectors: []policyv1alpha1.ResourceSelector{
+				{
+					APIVersion: resource.GetAPIVersion(),
+					Kind:       resource.GetKind(),
+					Namespace:  resource.GetNamespace(),
+					Name:       resource.GetName(),
+				},
+			},
+			OverrideRules: overrideRules,
+		},
+	}
+	runtimeObject := overridePolicy.DeepCopy()
+	var operationResult controllerutil.OperationResult
+	err = retry.RetryOnConflict(retry.DefaultRetry, func() (err error) {
+		operationResult, err = controllerutil.CreateOrUpdate(context.TODO(), client, runtimeObject, func() error {
+			runtimeObject.Spec = overridePolicy.Spec
+			runtimeObject.Labels = overridePolicy.Labels
+			runtimeObject.Annotations = overridePolicy.Annotations
+			return nil
+		})
+		if err != nil {
+			return err
+		}
+		return nil
+	})
+	if err != nil {
+		klog.Errorf("Failed to create/update overridePolicy %s/%s. Error: %v", overridePolicy.GetNamespace(), overridePolicy.GetName(), err)
+		return err
+	}
+
+	if operationResult == controllerutil.OperationResultCreated {
+		klog.V(2).Infof("Create overridePolicy %s/%s successfully.", overridePolicy.GetNamespace(), overridePolicy.GetName())
+	} else if operationResult == controllerutil.OperationResultUpdated {
+		klog.V(2).Infof("Update overridePolicy %s/%s successfully.", overridePolicy.GetNamespace(), overridePolicy.GetName())
+	} else {
+		klog.V(2).Infof("overridePolicy %s/%s is up to date.", overridePolicy.GetNamespace(), overridePolicy.GetName())
+	}
+
+	return nil
 }

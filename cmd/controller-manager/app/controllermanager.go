@@ -168,6 +168,7 @@ func init() {
 	controllers["cluster"] = startClusterController
 	controllers["clusterStatus"] = startClusterStatusController
 	controllers["hpa"] = startHpaController
+	controllers["federatedHpa"] = startFederatedHpaController
 	controllers["binding"] = startBindingController
 	controllers["execution"] = startExecutionController
 	controllers["workStatus"] = startWorkStatusController
@@ -287,6 +288,23 @@ func startHpaController(ctx controllerscontext.Context) (enabled bool, err error
 		RESTMapper:      ctx.Mgr.GetRESTMapper(),
 		InformerManager: ctx.ControlPlaneInformerManager,
 	}
+	if err := hpaController.SetupWithManager(ctx.Mgr); err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
+func startFederatedHpaController(ctx controllerscontext.Context) (enabled bool, err error) {
+	hpaController := &hpa.FederatedHorizontalPodAutoscalerController{
+		Client:                  ctx.Mgr.GetClient(),
+		DynamicClient:           ctx.DynamicClientSet,
+		EventRecorder:           ctx.Mgr.GetEventRecorderFor(hpa.FederatedControllerName),
+		RESTMapper:              ctx.Mgr.GetRESTMapper(),
+		InformerManager:         ctx.ControlPlaneInformerManager,
+		ClusterCacheSyncTimeout: ctx.Opts.ClusterCacheSyncTimeout,
+		StopChan:                ctx.StopChan,
+	}
+	hpaController.RunWorkQueue()
 	if err := hpaController.SetupWithManager(ctx.Mgr); err != nil {
 		return false, err
 	}

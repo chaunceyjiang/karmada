@@ -181,7 +181,7 @@ func assembleWorkStatus(works []workv1alpha1.Work, workload *unstructured.Unstru
 		}
 
 		for _, manifestStatus := range work.Status.ManifestStatuses {
-			equal, err := equalIdentifier(&manifestStatus.Identifier, identifierIndex, workload)
+			equal, err := EqualIdentifier(&manifestStatus.Identifier, identifierIndex, workload)
 			if err != nil {
 				return nil, err
 			}
@@ -219,7 +219,8 @@ func GetManifestIndex(manifests []workv1alpha1.Manifest, clusterObj *unstructure
 	return -1, fmt.Errorf("no such manifest exist")
 }
 
-func equalIdentifier(targetIdentifier *workv1alpha1.ResourceIdentifier, ordinal int, workload *unstructured.Unstructured) (bool, error) {
+// EqualIdentifier Judge whether identifier is equal to obj
+func EqualIdentifier(targetIdentifier *workv1alpha1.ResourceIdentifier, ordinal int, workload *unstructured.Unstructured) (bool, error) {
 	groupVersion, err := schema.ParseGroupVersion(workload.GetAPIVersion())
 	if err != nil {
 		return false, err

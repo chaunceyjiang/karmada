@@ -22,6 +22,15 @@ const (
 
 	// FederatedResourceQuotaNameLabel is added to Work to specify associated FederatedResourceQuota's name.
 	FederatedResourceQuotaNameLabel = "federatedresourcequota.karmada.io/name"
+
+	// FederatedHPANamespaceLabel is added to Work to specify associated FederatedHorizontalPodAutoScale's namespace.
+	FederatedHPANamespaceLabel = "federatedhpa.karmada.io/namespace"
+
+	// FederatedHPANameLabel is added to Work to specify associated FederatedHorizontalPodAutoScale's name.
+	FederatedHPANameLabel = "federatedhpa.karmada.io/name"
+
+	// FederatedHPAEnabledLabel  represents the use of Federated HPA
+	FederatedHPAEnabledLabel = "federatedhpa.karmada.io/enabled"
 )
 
 // Define annotations used by karmada system.
@@ -129,6 +138,11 @@ const (
 	CompletionsField = "completions"
 	// TemplateField indicates the 'template' field of a resource
 	TemplateField = "template"
+
+	// MaxReplicasField indicates the 'maxReplicas' field of HPA
+	MaxReplicasField = "maxReplicas"
+	// MinReplicasField indicates the 'minReplicas' field of HPA
+	MinReplicasField = "minReplicas"
 )
 
 const (

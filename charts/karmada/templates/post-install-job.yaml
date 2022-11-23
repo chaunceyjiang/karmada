@@ -93,6 +93,7 @@ spec:
           set -ex
           kubectl apply -k /crds --kubeconfig /etc/kubeconfig
           kubectl apply -f /static-resources --kubeconfig /etc/kubeconfig
+          cat /static-resources/webhook-configuration.yaml
           EOF
         volumeMounts:
           - name: {{ $name }}-crds-bases

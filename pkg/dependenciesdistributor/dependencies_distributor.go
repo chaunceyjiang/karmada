@@ -134,7 +134,7 @@ func (d *DependenciesDistributor) reconcile(key util.QueueKey) error {
 			errs = append(errs, err)
 			continue
 		} else if !matched {
-			klog.V(4).Infof("No need to sync binding(%s/%s)", binding.Namespace, binding.Name)
+			klog.V(4).Infof("No need to sync binding(%s/%s) clusterWideKey %s", binding.Namespace, binding.Name, clusterWideKey.String())
 			continue
 		}
 
@@ -148,6 +148,7 @@ func (d *DependenciesDistributor) reconcile(key util.QueueKey) error {
 // dependentObjectReferenceMatches tells if the given object is referred by current resource binding.
 func dependentObjectReferenceMatches(objectKey keys.ClusterWideKey, referenceBinding *workv1alpha2.ResourceBinding) (bool, error) {
 	dependencies, exist := referenceBinding.Annotations[bindingDependenciesAnnotationKey]
+	fmt.Printf("%s ===== %+v", objectKey.String(), exist)
 	if !exist {
 		return false, nil
 	}
@@ -157,7 +158,7 @@ func dependentObjectReferenceMatches(objectKey keys.ClusterWideKey, referenceBin
 	if err != nil {
 		return false, err
 	}
-
+	fmt.Printf("%s ===== %+v", objectKey.String(), dependenciesSlice)
 	if len(dependenciesSlice) == 0 {
 		return false, nil
 	}

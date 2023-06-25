@@ -513,7 +513,7 @@ end
 						}
 						fmt.Printf("dependency cr apiVersion: %s kind: %s name: %s namespace: %s\n", crGVRDep.String(), crdSpecNamesDep.Kind, crNameDep, crNamespaceDep)
 						namespace, found, err := unstructured.NestedString(cr.Object, "spec", "resource", "namespace")
-						fmt.Printf("namespace %s,found %+v,error: %+vn", namespace, found, err)
+						fmt.Printf("namespace %s,found %+v,error: %+v\n", namespace, found, err)
 						if err != nil || !found {
 							return false, err
 						}

@@ -402,7 +402,7 @@ var _ = ginkgo.Describe("Resource interpreter webhook testing", func() {
 				},
 			})
 			crPolicy.Spec.PropagateDeps = true
-			fmt.Printf("dependency cr apiVersion: %s kind: %s name: %s namespace: %s", crAPIVersionDep, crdSpecNamesDep.Kind, crNameDep, crNamespaceDep)
+			fmt.Printf("dependency cr apiVersion: %s kind: %s name: %s namespace: %s\n", crAPIVersionDep, crdSpecNamesDep.Kind, crNameDep, crNamespaceDep)
 			customization = testhelper.NewResourceInterpreterCustomization(
 				"interpreter-customization"+rand.String(RandomStrLength),
 				configv1alpha1.CustomizationTarget{
@@ -505,14 +505,15 @@ end
 					clusterDynamicClient := framework.GetClusterDynamicClient(cluster.Name)
 					gomega.Expect(clusterDynamicClient).ShouldNot(gomega.BeNil())
 
-					klog.Infof("Waiting for cr(%s/%s) synced on cluster(%s)", crNamespaceDep, crNameDep, cluster.Name)
+					klog.Infof("Waiting for dependency cr(%s/%s) synced on cluster(%s)", crNamespaceDep, crNameDep, cluster.Name)
 					err := wait.PollImmediate(pollInterval, pollTimeout, func() (done bool, err error) {
 						cr, err := clusterDynamicClient.Resource(crGVRDep).Namespace(crNamespaceDep).Get(context.TODO(), crNameDep, metav1.GetOptions{})
 						if err != nil {
 							return false, err
 						}
-
+						fmt.Printf("dependency cr apiVersion: %s kind: %s name: %s namespace: %s\n", crGVRDep.String(), crdSpecNamesDep.Kind, crNameDep, crNamespaceDep)
 						namespace, found, err := unstructured.NestedString(cr.Object, "spec", "resource", "namespace")
+						fmt.Printf("namespace %s,found %+v,error: %+vn", namespace, found, err)
 						if err != nil || !found {
 							return false, err
 						}

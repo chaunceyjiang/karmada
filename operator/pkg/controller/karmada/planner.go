@@ -21,6 +21,7 @@ import (
 	"fmt"
 
 	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	clientset "k8s.io/client-go/kubernetes"
@@ -164,15 +165,22 @@ func (p *Planner) afterRunJob() error {
 				return err
 			}
 
-			_, err = localClusterClient.CoreV1().Secrets(p.karmada.GetNamespace()).Create(context.TODO(), &corev1.Secret{
+			adminKubeconfig := &corev1.Secret{
 				ObjectMeta: metav1.ObjectMeta{
 					Namespace: p.karmada.GetNamespace(),
 					Name:      util.AdminKubeconfigSecretName(p.karmada.GetName()),
 				},
 				Data: secret.Data,
-			}, metav1.CreateOptions{})
+			}
+			_, err = localClusterClient.CoreV1().Secrets(p.karmada.GetNamespace()).Create(context.TODO(), adminKubeconfig, metav1.CreateOptions{})
 			if err != nil {
-				return err
+				if !apierrors.IsAlreadyExists(err) {
+					return err
+				}
+				_, err := localClusterClient.CoreV1().Secrets(p.karmada.GetNamespace()).Update(context.TODO(), adminKubeconfig, metav1.UpdateOptions{})
+				if err != nil {
+					return err
+				}
 			}
 		}
 

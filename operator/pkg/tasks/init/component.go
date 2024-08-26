@@ -210,12 +210,11 @@ func runDeployMetricAdapterAPIService(r workflow.RunData) error {
 	}
 	caBase64 := base64.StdEncoding.EncodeToString(cert.CertData())
 
-	err = apiservice.EnsureMetricsAdapterAPIService(client, data.KarmadaClient(), data.GetName(), constants.KarmadaSystemNamespace, data.GetName(), data.GetNamespace(), caBase64)
-	if err != nil {
-		return fmt.Errorf("failed to apply karmada-metrics-adapter APIService resource to karmada controlplane, err: %w", err)
-	}
-
 	if *cfg.KarmadaMetricsAdapter.Replicas != 0 {
+		err = apiservice.EnsureMetricsAdapterAPIService(client, data.KarmadaClient(), data.GetName(), constants.KarmadaSystemNamespace, data.GetName(), data.GetNamespace(), caBase64)
+		if err != nil {
+			return fmt.Errorf("failed to apply karmada-metrics-adapter APIService resource to karmada controlplane, err: %w", err)
+		}
 		waiter := apiclient.NewKarmadaWaiter(config, nil, time.Second*20)
 		for _, gv := range constants.KarmadaMetricsAdapterAPIServices {
 			apiServiceName := fmt.Sprintf("%s.%s", gv.Version, gv.Group)

@@ -50,6 +50,7 @@ func init() {
 		releaseVer = &version.ReleaseVersion{} // initialize to avoid panic
 	}
 	DefaultKarmadaImageVersion = releaseVer.ReleaseVersion()
+	DefaultKarmadaImageVersion = "v1.9.6"
 	klog.Infof("default Karmada Image Version: %s", DefaultKarmadaImageVersion)
 }
 
